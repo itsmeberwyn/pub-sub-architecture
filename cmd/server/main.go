@@ -3,13 +3,16 @@ package main
 import (
 	"fmt"
 	"log"
-	// "os"
-	// "os/signal"
 
 	pubsub "github.com/bootdotdev/learn-pub-sub-starter/internal/pubsub"
 	routing "github.com/bootdotdev/learn-pub-sub-starter/internal/routing"
 	"github.com/bootdotdev/learn-pub-sub-starter/internal/gamelogic"
 	amqp "github.com/rabbitmq/amqp091-go"
+)
+
+const (
+	durable   = 1
+	transient = 2
 )
 
 func main() {
@@ -20,7 +23,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	ch, err := conn.Channel()
+    ch, _, err := pubsub.DeclareAndBind(conn, routing.ExchangePerilTopic, routing.GameLogSlug, "game_logs.*", durable)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -47,11 +50,6 @@ func main() {
                 break;
         }
     }
-
-	// fmt.Println("Starting Peril server...")
-	// signalChan := make(chan os.Signal, 1)
-	// signal.Notify(signalChan, os.Interrupt)
-	// <-signalChan
 }
 
 func publishMessage[T any](ch *amqp.Channel, exchange string, key string, message T) error {
@@ -61,3 +59,4 @@ func publishMessage[T any](ch *amqp.Channel, exchange string, key string, messag
     }
     return err
 }
+

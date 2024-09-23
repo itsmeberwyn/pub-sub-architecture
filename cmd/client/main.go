@@ -3,8 +3,6 @@ package main
 import (
 	"fmt"
 	"log"
-	"os"
-	"os/signal"
 
 	"github.com/bootdotdev/learn-pub-sub-starter/internal/gamelogic"
 	"github.com/bootdotdev/learn-pub-sub-starter/internal/pubsub"
@@ -30,17 +28,51 @@ func main() {
 		log.Fatal(err)
 	}
 
-	ch, _, err := pubsub.DeclareAndBind(conn, routing.ExchangePerilDirect, routing.PauseKey+"."+user, routing.PauseKey, durable)
+	gameState := gamelogic.NewGameState(user)
+    pubsub.SubscribeJSON(conn, routing.ExchangePerilDirect, routing.PauseKey+"."+user, routing.PauseKey, transient, handlerPause(gameState))
+	for {
+		input := gamelogic.GetInput()
+		switch input[0] {
+		case "spawn":
+			err := gameState.CommandSpawn(input)
+			if err != nil {
+				fmt.Println(err)
+			}
+		case "move":
+			_, err := gameState.CommandMove(input)
+			if err != nil {
+				fmt.Println(err)
+			}
+		case "status":
+			gameState.CommandStatus()
+		case "help":
+			gamelogic.PrintClientHelp()
+		case "spam":
+            fmt.Println("Spamming not allowed yet!")
+		case "quit":
+            gamelogic.PrintQuit()
+            return
+		default:
+			fmt.Println("I dont have an idea")
+			break
+		}
+	}
+}
 
-	err = pubsub.PublishJSON(ch, routing.ExchangePerilDirect, routing.PauseKey, routing.PlayingState{
-		IsPaused: true,
-	})
+func handlerPause(gs *gamelogic.GameState) func(routing.PlayingState) {
+    defer fmt.Print("> ")
+    return func(ps routing.PlayingState) {
+        gs.HandlePause(routing.PlayingState{
+            IsPaused: ps.IsPaused,
+        })
+    }
+}
+
+func publishMessage[T any](ch *amqp.Channel, exchange string, key string, message T) error {
+	err := pubsub.PublishJSON(ch, exchange, key, message)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	fmt.Println("Starting Peril server...")
-	signalChan := make(chan os.Signal, 1)
-	signal.Notify(signalChan, os.Interrupt)
-	<-signalChan
+	return err
 }
+

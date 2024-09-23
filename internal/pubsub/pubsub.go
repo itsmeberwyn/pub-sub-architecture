@@ -44,7 +44,7 @@ func DeclareAndBind(
 	if simpleQueueType == 2 { // 2 mean transient
 		durable = false
 		autoDelete = true
-		exclusive = true
+		exclusive = false
 	}
 	queue, err := ch.QueueDeclare(queueName, durable, autoDelete, exclusive, false, nil)
 	if err != nil {
@@ -57,4 +57,35 @@ func DeclareAndBind(
 	}
 
 	return ch, queue, err
+}
+
+func SubscribeJSON[T any](
+	conn *amqp.Connection,
+	exchange,
+	queueName,
+	key string,
+	simpleQueueType int,
+	handler func(T),
+) error {
+    ch, queue, err := DeclareAndBind(conn, exchange, queueName, key, simpleQueueType)
+    if err != nil {
+        return err
+    }
+
+    msgs, err := ch.Consume(queue.Name, "", false, false, false, false, nil)
+
+    go func() {
+        var body T
+        for msg := range msgs {
+            err := json.Unmarshal(msg.Body, &body)
+            if err != nil {
+                log.Fatal(err)
+            }
+            handler(body)
+            msg.Ack(false)
+        }
+    }()
+
+
+    return nil
 }
