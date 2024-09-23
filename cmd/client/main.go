@@ -29,7 +29,7 @@ func main() {
 	}
 
 	gameState := gamelogic.NewGameState(user)
-    pubsub.SubscribeJSON(conn, routing.ExchangePerilDirect, routing.PauseKey+"."+user, routing.PauseKey, transient, handlerPause(gameState))
+	pubsub.SubscribeJSON(conn, routing.ExchangePerilDirect, routing.PauseKey+"."+user, routing.PauseKey, transient, handlerPause(gameState))
 	for {
 		input := gamelogic.GetInput()
 		switch input[0] {
@@ -48,10 +48,10 @@ func main() {
 		case "help":
 			gamelogic.PrintClientHelp()
 		case "spam":
-            fmt.Println("Spamming not allowed yet!")
+			fmt.Println("Spamming not allowed yet!")
 		case "quit":
-            gamelogic.PrintQuit()
-            return
+			gamelogic.PrintQuit()
+			return
 		default:
 			fmt.Println("I dont have an idea")
 			break
@@ -60,12 +60,12 @@ func main() {
 }
 
 func handlerPause(gs *gamelogic.GameState) func(routing.PlayingState) {
-    defer fmt.Print("> ")
-    return func(ps routing.PlayingState) {
-        gs.HandlePause(routing.PlayingState{
-            IsPaused: ps.IsPaused,
-        })
-    }
+	defer fmt.Print("> ")
+	return func(ps routing.PlayingState) {
+		gs.HandlePause(routing.PlayingState{
+			IsPaused: ps.IsPaused,
+		})
+	}
 }
 
 func publishMessage[T any](ch *amqp.Channel, exchange string, key string, message T) error {
@@ -75,4 +75,3 @@ func publishMessage[T any](ch *amqp.Channel, exchange string, key string, messag
 	}
 	return err
 }
-
