@@ -67,23 +67,28 @@ func main() {
 	}
 }
 
-func handlerPause(gs *gamelogic.GameState) func(routing.PlayingState) {
+func handlerPause(gs *gamelogic.GameState) func(routing.PlayingState) string {
 	defer fmt.Print(">")
-	return func(ps routing.PlayingState) {
+	return func(ps routing.PlayingState) string {
 		gs.HandlePause(routing.PlayingState{
 			IsPaused: ps.IsPaused,
 		})
+        return "Ack"
 	}
 }
 
-func handlerMove(gs *gamelogic.GameState) func(gamelogic.ArmyMove) {
+func handlerMove(gs *gamelogic.GameState) func(gamelogic.ArmyMove) string {
 	defer fmt.Print(">")
-	return func(ga gamelogic.ArmyMove) {
-		gs.HandleMove(gamelogic.ArmyMove{
+	return func(ga gamelogic.ArmyMove) string {
+        outcome := gs.HandleMove(gamelogic.ArmyMove{
 			Player:     ga.Player,
 			Units:      ga.Units,
 			ToLocation: ga.ToLocation,
 		})
+        if (outcome == gamelogic.MoveOutComeSafe) || (outcome == gamelogic.MoveOutcomeMakeWar) {
+            return "Ack"
+        } 
+        return "NackDiscard"
 	}
 }
 
