@@ -3,6 +3,7 @@ package gamelogic
 import (
 	"errors"
 	"fmt"
+	"log"
 	"strconv"
 )
 
@@ -25,6 +26,7 @@ func (gs *GameState) HandleMove(move ArmyMove) MoveOutcome {
 		fmt.Printf("* %v\n", unit.Rank)
 	}
 
+    log.Println(player.Username, move.Player.Username)
 	if player.Username == move.Player.Username {
 		return MoveOutcomeSamePlayer
 	}

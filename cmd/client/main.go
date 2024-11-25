@@ -81,11 +81,7 @@ func handlerPause(gs *gamelogic.GameState) func(routing.PlayingState) string {
 func handlerMove(ch *amqp.Channel, gs *gamelogic.GameState) func(gamelogic.ArmyMove) string {
 	defer fmt.Print(">")
 	return func(ga gamelogic.ArmyMove) string {
-        outcome := gs.HandleMove(gamelogic.ArmyMove{
-			Player:     ga.Player,
-			Units:      ga.Units,
-			ToLocation: ga.ToLocation,
-		})
+        outcome := gs.HandleMove(ga)
         if outcome == gamelogic.MoveOutComeSafe {
             return "Ack"
         }
@@ -97,9 +93,9 @@ func handlerMove(ch *amqp.Channel, gs *gamelogic.GameState) func(gamelogic.ArmyM
                     Defender: ga.Player,
                 })
             if err != nil {
-                log.Fatal(err)
+                return "NackRequeue"
             }
-            return "NackRequeue"
+            return "Ack"
         }
         return "NackDiscard"
 	}
@@ -109,7 +105,7 @@ func handlerWar(ch *amqp.Channel, gs *gamelogic.GameState) func(gamelogic.Recogn
     defer fmt.Print(">")
     return func(rec gamelogic.RecognitionOfWar) string {
         outcome, _, _ := gs.HandleWar(rec)
-        log.Println(outcome, " hello 123")
+        log.Println(outcome, " test123")
         if outcome == gamelogic.WarOutcomeNotInvolved {
             return "NackRequeue"
         } else if outcome == gamelogic.WarOutcomeNoUnits {

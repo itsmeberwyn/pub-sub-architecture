@@ -84,7 +84,6 @@ func SubscribeJSON[T any](
                 log.Fatal(err)
             }
             ackType := handler(body)
-            log.Println(ackType)
             if ackType == "Ack" {
                 msg.Ack(false)
             } else if ackType == "NackRequeue" {
